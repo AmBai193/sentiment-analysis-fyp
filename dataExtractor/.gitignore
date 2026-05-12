@@ -16,8 +16,8 @@ credentials.json
 # --- Large ML Models & Data ---
 # These folders/files are too big for a standard GitHub push
 bert_finetuned_*/
-*.pkl
-*.joblib
+# *.pkl
+# *.joblib
 *.csv
 # If you have a specific folder for results, ignore it too:
 results/
