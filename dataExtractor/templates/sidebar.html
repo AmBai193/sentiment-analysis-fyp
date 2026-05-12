@@ -1,0 +1,63 @@
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="logo-container">
+      <div class="logo">
+        <svg><use href="#bar-chart-3"></use></svg>
+      </div>
+      <h2>SentimentLab</h2>
+    </div>
+    <button class="toggle-btn" onclick="toggleSidebar()">
+      <svg><use href="#chevron-left"></use></svg>
+    </button>
+  </div>
+  <ul class="sidebar-menu">
+    <li>
+      <a
+        href="{{ url_for('home') }}"
+        class="{% if request.endpoint=='home' %}active{% endif %}"
+        data-route="{{ url_for('home') }}"
+        onclick="handleMenuClick(event)"
+      >
+        <svg class="menu-icon"><use href="#layout-dashboard"></use></svg>
+        <span class="menu-text">Main Dashboard</span>
+        <div class="tooltip">Main Dashboard</div>
+      </a>
+    </li>
+    <li>
+      <a
+        href="{{ url_for('batch_analysis') }}"
+        class="{% if request.endpoint=='batch_analysis' %}active{% endif %}"
+        data-route="{{ url_for('batch_analysis') }}"
+        onclick="handleMenuClick(event)"
+      >
+        <svg class="menu-icon"><use href="#layers"></use></svg>
+        <span class="menu-text">Batch Analysis</span>
+        <div class="tooltip">Batch Analysis</div>
+      </a>
+    </li>
+    <li>
+      <a
+        href="{{ url_for('result') }}"
+        class="{% if request.endpoint=='result' %}active{% endif %}"
+        data-route="{{ url_for('result') }}"
+        onclick="handleMenuClick(event)"
+      >
+        <svg class="menu-icon"><use href="#history"></use></svg>
+        <span class="menu-text">Results History</span>
+        <div class="tooltip">Results History</div>
+      </a>
+    </li>
+    <li>
+      <a
+        href="{{ url_for('evaluation_report') }}"
+        class="{% if request.endpoint=='evaluation_report' %}active{% endif %}"
+        data-route="{{ url_for('evaluation_report') }}"
+        onclick="handleMenuClick(event)"
+      >
+        <svg class="menu-icon"><use href="#trending-up"></use></svg>
+        <span class="menu-text">Evaluation Report</span>
+        <div class="tooltip">Evaluation Report</div>
+      </a>
+    </li>
+  </ul>
+</div>

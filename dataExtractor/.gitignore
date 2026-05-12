@@ -1,0 +1,43 @@
+# --- Python & Environments ---
+# This ignores your 8GB library folder
+.venv/
+venv/
+env/
+# Ignores compiled python files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- Project Specific Secrets ---
+# NEVER upload your Firebase keys to GitHub
+credentials.json
+
+# --- Large ML Models & Data ---
+# These folders/files are too big for a standard GitHub push
+bert_finetuned_*/
+*.pkl
+*.joblib
+*.csv
+# If you have a specific folder for results, ignore it too:
+results/
+
+# --- IDE & OS Files ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Distribution ---
+# You WANT to keep your requirements.txt, but ignore the actual builds
+dist/
+build/
+*.egg-info/
+
+# Specific Large Files
+lid.176.bin
+chrome-headless-shell.exe
+
+# Also ignore any other potential browser binaries
+*.exe
+*.bin

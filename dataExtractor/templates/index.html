@@ -1,0 +1,2125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Sentiment Analysis Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #e3f2fd, #bbdefb, #90caf9);
+      background-image: url('/static/images/PRU15-1.jpg');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      background-position: center center;
+      image-rendering: auto;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar styles */
+    .sidebar {
+      width: 240px;
+      background-color: #343a40;
+      color: white;
+      padding: 20px;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+      overflow-y: auto;
+      height: 100vh;
+      position: fixed;
+      z-index: 1000;
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #495057;
+    }
+
+    .sidebar-header img {
+      height: 40px;
+      margin-right: 10px;
+    }
+
+    .sidebar-header h2 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+
+    .sidebar-menu {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .sidebar-menu li {
+      margin-bottom: 10px;
+    }
+
+    .sidebar-menu a {
+      color: #adb5bd;
+      text-decoration: none;
+      display: block;
+      padding: 10px;
+      border-radius: 4px;
+      transition: all 0.3s;
+    }
+
+    .sidebar-menu a:hover, .sidebar-menu a.active {
+      background-color: #495057;
+      color: white;
+    }
+
+    /* Main content styles */
+    .main-content {
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(8px);
+      border-radius: 24px;
+      box-shadow: 0 8px 32px 0 rgba(31,38,135,0.18);
+      margin: 32px 0 32px 280px;
+      padding: 32px 24px 32px 24px;
+      min-height: 90vh;
+      transition: background 0.3s;
+    }
+
+    .navbar {
+      background: rgba(255,255,255,0.7);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      border-radius: 16px;
+      margin-bottom: 32px;
+      animation: fadeInDown 0.7s;
+    }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .page-title h1 {
+      margin: 0;
+      color: #343a40;
+      font-size: 1.5rem;
+    }
+
+    .user-menu {
+      display: flex;
+      align-items: center;
+    }
+
+    .user-menu img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-left: 15px;
+    }
+
+    /* Dashboard layout */
+    .dashboard-container {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .control-panel {
+      background-color: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      position: relative;
+      transition: all 0.3s ease;
+      height: fit-content;
+      position: sticky;
+      top: 20px;
+    }
+
+    .results-container {
+      display: grid;
+      grid-template-rows: auto auto auto;
+      gap: 20px;
+      min-height: 0;
+    }
+
+    .sentiment-results {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .detailed-results {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .visualization-results {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .control-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .control-panel-header h1 {
+      color: #007bff;
+      margin: 0;
+      font-size: 2.2rem;
+      font-weight: 600;
+      background: linear-gradient(45deg, #007bff, #00a0ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .control-panel .guide-section {
+      position: absolute;
+      top: 0;
+      right: -380px;
+      width: 350px;
+      z-index: 1000;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    .results-panel {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .visualization-container {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+
+    .chart-section {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .chart-container {
+      position: relative;
+      height: 400px;
+      margin-top: 20px;
+      margin-bottom: 30px;
+    }
+
+    #multiPieCharts {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .multi-charts {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 30px;
+      margin-top: 20px;
+    }
+
+    .chart-wrapper {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      height: 300px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chart-title {
+      font-size: 1rem;
+      color: #343a40;
+      margin-bottom: 15px;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    #comparison {
+      margin-top: 30px;
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    #comparison h3 {
+      color: #343a40;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    #jsonPreview {
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      overflow-x: auto;
+      font-size: 0.9rem;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .json-container {
+      margin-top: 30px;
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .json-container h3 {
+      color: #343a40;
+      margin-bottom: 15px;
+    }
+
+    /* Control panel styles */
+    .control-panel:hover {
+      box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    }
+
+    .control-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .control-panel-header h1 {
+      color: #007bff;
+      margin: 0;
+      font-size: 2.2rem;
+      font-weight: 600;
+      background: linear-gradient(45deg, #007bff, #00a0ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .control-panel .guide-section {
+      position: absolute;
+      top: 0;
+      right: -380px;
+      width: 350px;
+      z-index: 1000;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    select, textarea {
+      width: 100%;
+      padding: 12px 15px;
+      margin-bottom: 20px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: all 0.3s ease;
+      background-color: #f8f9fa;
+    }
+
+    select:hover, textarea:hover {
+      border-color: #b0b0b0;
+    }
+
+    select:focus, textarea:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+      background-color: #fff;
+    }
+
+    textarea {
+      min-height: 180px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    #wordCounter {
+      color: #6c757d;
+      font-size: 0.9rem;
+      margin: 0 0 15px 2px;
+    }
+
+    button#analyzeButton {
+      background: linear-gradient(45deg, #007bff, #00a0ff);
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      width: 100%;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0;
+    }
+
+    button#analyzeButton:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,123,255,0.2);
+    }
+
+    button#analyzeButton:disabled {
+      background: linear-gradient(45deg, #ccc, #ddd);
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .hint-icon {
+      background: none;
+      border: none;
+      font-size: 26px;
+      cursor: pointer;
+      padding: 8px 12px;
+      transition: all 0.3s ease;
+      color: #007bff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hint-icon:hover {
+      transform: scale(1.1) rotate(12deg);
+      background: rgba(0,123,255,0.1);
+      color: #0056b3;
+    }
+
+    .guide-card {
+      background-color: rgba(255, 255, 255, 0.98);
+      border-radius: 12px;
+      padding: 20px 25px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      border-left: 4px solid #007bff;
+      backdrop-filter: blur(10px);
+    }
+
+    .guide-card h3 {
+      color: #007bff;
+      margin-top: 0;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1.2rem;
+    }
+
+    .guide-card ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .guide-card li {
+      margin-bottom: 12px;
+      color: #495057;
+      line-height: 1.5;
+    }
+
+    .guide-card strong {
+      color: #343a40;
+    }
+
+    .close-guide {
+      background: none;
+      border: none;
+      font-size: 22px;
+      color: #6c757d;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+      margin-right: -8px;
+    }
+
+    .close-guide:hover {
+      color: #343a40;
+      background-color: rgba(0,0,0,0.05);
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    /* Results panel styles */
+    .result-item {
+      margin-bottom: 15px;
+      padding: 15px;
+      border-radius: 4px;
+      background-color: #f8f9fa;
+      position: relative;
+    }
+
+    .result-item.negative {
+      border-left: 4px solid #dc3545;
+    }
+
+    .result-item.neutral {
+      border-left: 4px solid #ffc107;
+    }
+
+    .result-item.positive {
+      border-left: 4px solid #28a745;
+    }
+
+    .result-item strong {
+      color: #343a40;
+    }
+
+    /* Metrics styles */
+    .metrics-group {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .metrics-group h3 {
+      color: #343a40;
+      margin-top: 0;
+      margin-bottom: 15px;
+      font-size: 1.1rem;
+      text-align: center;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      margin-top: 15px;
+    }
+
+    .metric {
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+      transition: transform 0.2s;
+    }
+
+    .metric:hover {
+      transform: translateY(-2px);
+    }
+
+    .metric-value {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: #007bff;
+      margin-bottom: 5px;
+    }
+
+    .metric-label {
+      font-size: 0.9rem;
+      color: #6c757d;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Chart styles */
+    canvas {
+      max-width: 100%;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 1200px) {
+      .dashboard-container {
+        grid-template-columns: 1fr;
+      }
+
+      .control-panel {
+        position: relative;
+        top: 0;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .multi-charts {
+        grid-template-columns: 1fr;
+      }
+
+      .chart-container {
+        height: 300px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .metrics {
+        grid-template-columns: 1fr;
+      }
+    }
+      /* Enhanced Sidebar styles */
+    .sidebar {
+      width: 280px;
+      background: linear-gradient(180deg, #1e293b 0%, #334155 100%);
+      color: white;
+      padding: 0;
+      box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+      overflow: hidden;
+      height: 100vh;
+      position: fixed;
+      z-index: 1000;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .sidebar.collapsed {
+      width: 80px;
+    }
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      padding: 24px 20px;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .sidebar-header .logo {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 16px;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .sidebar-header .logo svg {
+      width: 24px;
+      height: 24px;
+      color: white;
+    }
+
+    .sidebar-header h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      opacity: 1;
+      transition: opacity 0.3s ease;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .sidebar.collapsed .sidebar-header h2 {
+      opacity: 0;
+      width: 0;
+    }
+    .toggle-btn {
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      border-radius: 8px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-50%) scale(1.1);
+    }
+
+    .toggle-btn svg {
+      width: 16px;
+      height: 16px;
+      color: white;
+      transition: transform 0.3s ease;
+    }
+
+    .sidebar.collapsed .toggle-btn svg {
+      transform: rotate(180deg);
+    }
+    .sidebar-menu {
+      list-style: none;
+      padding: 16px 0;
+      margin: 0;
+    }
+
+    .sidebar-menu li {
+      margin: 0;
+    }
+
+    .sidebar-menu a {
+      color: #cbd5e1;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      padding: 16px 20px;
+      transition: all 0.2s ease;
+      position: relative;
+      border-left: 3px solid transparent;
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
+
+    .sidebar-menu a:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #f1f5f9;
+      border-left-color: #3b82f6;
+    }
+
+    .sidebar-menu a.active {
+      background: linear-gradient(90deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05));
+      color: #93c5fd;
+      border-left-color: #3b82f6;
+      box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.1);
+    }
+
+    .sidebar-menu a.active::before {
+      content: '';
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 6px;
+      height: 6px;
+      background: #3b82f6;
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+    }
+    .menu-icon {
+      width: 20px;
+      height: 20px;
+      margin-right: 16px;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+
+    .menu-text {
+      opacity: 1;
+      transition: opacity 0.3s ease;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .sidebar.collapsed .menu-text {
+      opacity: 0;
+      width: 0;
+    }
+
+    .sidebar.collapsed .menu-icon {
+      margin-right: 0;
+    }
+
+    .sidebar.collapsed .sidebar-menu a {
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .sidebar.collapsed .sidebar-menu a.active::before {
+      display: none;
+    }
+    /* Tooltip for collapsed state */
+    .tooltip {
+      position: absolute;
+      left: 90px;
+      background: #1f2937;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+      pointer-events: none;
+      z-index: 1001;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .tooltip::before {
+      content: '';
+      position: absolute;
+      left: -4px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 4px solid transparent;
+      border-right-color: #1f2937;
+    }
+
+    .sidebar.collapsed .sidebar-menu a:hover .tooltip {
+      opacity: 1;
+      visibility: visible;
+    }
+    /* Main content adjustments */
+    .main-content {
+      flex: 1;
+      margin-left: 280px;
+      padding: 20px;
+      transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body .sidebar.collapsed ~ .main-content {
+        margin-left: 80px;
+    }
+
+    /* Mobile menu button */
+    .mobile-menu-btn {
+      display: none;
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 1002;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      border: none;
+      border-radius: 12px;
+      width: 48px;
+      height: 48px;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .mobile-menu-btn svg {
+      width: 24px;
+      height: 24px;
+      color: white;
+    }
+    /* Responsive design */
+    @media (max-width: 1024px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .main-content {
+        margin-left: 0;
+      }
+
+      .sidebar.collapsed + .main-content {
+        margin-left: 0;
+      }
+
+      .mobile-menu-btn {
+        display: flex;
+      }
+
+      .main-content {
+        padding-left: 80px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 100%;
+      }
+    }
+    body .sidebar.collapsed ~ .main-content {
+      margin-left: 80px;
+    }
+    @media (max-width: 1024px) {
+    /* Hide sidebar by default on tablets and mobile */
+    .sidebar {
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+      z-index: 9999; /* Higher z-index for mobile */
+    }
+
+    .sidebar.open {
+      transform: translateX(0);
+    }
+
+    /* Adjust main content */
+    .main-content {
+      margin-left: 0 !important;
+      padding: 60px 15px 15px 15px; /* Top padding for mobile menu button */
+    }
+
+    /* Show mobile menu button */
+    .mobile-menu-btn {
+      display: flex !important;
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      z-index: 10000;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      border: none;
+      border-radius: 8px;
+      width: 44px;
+      height: 44px;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+    }
+
+    /* Adjust dashboard layout for tablets */
+    .dashboard-container {
+      grid-template-columns: 1fr !important;
+      gap: 15px;
+    }
+
+    .control-panel {
+      position: relative !important;
+      top: 0 !important;
+      margin-bottom: 20px;
+    }
+
+    /* Adjust navbar */
+    .navbar {
+      flex-direction: column;
+      gap: 10px;
+      text-align: center;
+    }
+
+    .page-title h1 {
+      font-size: 1.3rem;
+    }
+
+    /* Adjust guide section positioning */
+    .control-panel .guide-section {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      right: auto;
+      width: 90vw;
+      max-width: 400px;
+      z-index: 10001;
+    }
+  }
+
+  @media (max-width: 768px) {
+    /* Full width sidebar on mobile */
+    .sidebar {
+      width: 100vw;
+      max-width: 320px;
+    }
+
+    /* Smaller padding for mobile */
+    .main-content {
+      padding: 70px 10px 10px 10px;
+    }
+
+    /* Stack charts vertically */
+    .multi-charts {
+      grid-template-columns: 1fr !important;
+      gap: 20px;
+    }
+
+    /* Smaller chart containers */
+    .chart-container {
+      height: 250px !important;
+    }
+
+    .chart-wrapper {
+      height: 250px !important;
+    }
+
+    /* Adjust control panel */
+    .control-panel {
+      padding: 20px;
+    }
+
+    .control-panel-header h1 {
+      font-size: 1.8rem;
+    }
+
+    /* Mobile-friendly textarea */
+    textarea {
+      min-height: 120px;
+      font-size: 16px; /* Prevents zoom on iOS */
+    }
+
+    select {
+      font-size: 16px; /* Prevents zoom on iOS */
+    }
+
+    /* Stack metrics in fewer columns */
+    .metrics {
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 10px;
+    }
+
+    /* Adjust result items */
+    .result-item {
+      padding: 12px;
+      font-size: 0.9rem;
+    }
+
+    /* Smaller json preview */
+    #jsonPreview {
+      font-size: 0.8rem;
+      max-height: 200px;
+    }
+
+    /* Adjust user menu */
+    .user-menu {
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .user-menu img {
+      width: 32px;
+      height: 32px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    /* Extra small screens */
+    .mobile-menu-btn {
+      width: 40px;
+      height: 40px;
+      top: 10px;
+      left: 10px;
+    }
+
+    .main-content {
+      padding: 60px 8px 8px 8px;
+    }
+
+    /* Single column metrics */
+    .metrics {
+      grid-template-columns: 1fr !important;
+    }
+
+    /* Smaller control panel header */
+    .control-panel-header h1 {
+      font-size: 1.5rem;
+    }
+
+    /* Adjust page title */
+    .page-title h1 {
+      font-size: 1.1rem;
+    }
+
+    /* Smaller chart heights */
+    .chart-container {
+      height: 200px !important;
+    }
+
+    .chart-wrapper {
+      height: 200px !important;
+    }
+
+    /* Adjust button */
+    button#analyzeButton {
+      padding: 12px 20px;
+      font-size: 14px;
+    }
+
+    /* Smaller guide card */
+    .guide-card {
+      padding: 15px 18px;
+      width: 95vw;
+    }
+
+    .guide-card h3 {
+      font-size: 1rem;
+    }
+
+    .guide-card li {
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+  }
+
+  /* ==== ADDITIONAL ENHANCEMENTS ==== */
+
+  /* Touch-friendly hover states for mobile */
+  @media (hover: none) and (pointer: coarse) {
+    .hint-icon:hover,
+    button#analyzeButton:hover:not(:disabled),
+    .metric:hover {
+      transform: none; /* Disable hover transforms on touch devices */
+    }
+
+    /* Add active states instead */
+    .hint-icon:active {
+      transform: scale(0.95);
+    }
+
+    button#analyzeButton:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+  }
+
+  /* Improve scrolling on mobile */
+  .sidebar {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #jsonPreview {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Add backdrop for mobile sidebar */
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9998;
+  }
+
+  @media (max-width: 1024px) {
+    .sidebar-backdrop.show {
+      display: block;
+    }
+  }
+
+  /* Ensure proper spacing for mobile guide */
+  @media (max-width: 768px) {
+    .guide-section {
+      position: fixed !important;
+      top: 50% !important;
+      left: 50% !important;
+      transform: translate(-50%, -50%) !important;
+      right: auto !important;
+      width: 90vw !important;
+      max-width: 350px !important;
+      z-index: 10001 !important;
+    }
+}
+    #languageIndicator {
+  margin-bottom: 15px;
+  font-size: 0.9rem;
+  color: #6c757d;
+  padding: 8px 12px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+#detectedLanguage {
+  font-weight: 500;
+  color: #343a40;
+}
+
+#translationNote {
+  color: #6c757d;
+  font-style: italic;
+}
+/* Add to your existing CSS */
+#languageSelector {
+  width: 100%;
+  padding: 12px 15px;
+  margin-bottom: 15px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 15px;
+  transition: all 0.3s ease;
+  background-color: #f8f9fa;
+}
+
+#languageSelector:hover {
+  border-color: #b0b0b0;
+}
+
+#languageSelector:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+  background-color: #fff;
+}
+
+  </style>
+</head>
+<body>
+ <button class="mobile-menu-btn" onclick="toggleSidebar()" id="mobileMenuBtn">
+  <svg><use href="#menu"></use></svg>
+</button>
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
+{% include 'sidebar.html' %}
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Navbar -->
+    <div class="navbar">
+      <div class="page-title">
+        <h1>Sentiment Analysis Dashboard</h1>
+      </div>
+      <div class="user-menu">
+        <span>Welcome, User</span>
+        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiNFNUU3RUIiLz4KPGNpcmNsZSBjeD0iMjAiIGN5PSIxNiIgcj0iNiIgZmlsbD0iIzZCNzI4MCIvPgo8cGF0aCBkPSJNMTAgMzJDMTAgMjYuNDc3MiAxNC40NzcyIDIyIDIwIDIyQzI1LjUyMjggMjIgMzAgMjYuNDc3MiAzMCAzMlYzNkgxMFYzMloiIGZpbGw9IiM2QjcyODAiLz4KPC9zdmc+" alt="User">
+      </div>
+    </div>
+
+    <!-- Dashboard Content -->
+    <div class="dashboard-container">
+      <!-- Left Column: Control Panel -->
+      <div class="control-panel">
+        <div class="control-panel-header">
+          <h1>Analyze Text</h1>
+          <button class="hint-icon" onclick="toggleGuide()">💡</button>
+    </div>
+
+    <!-- User Guide (Hidden by default) -->
+    <div class="guide-section" id="guideSection" style="display: none;">
+      <div class="guide-card">
+        <h3>📝 Quick Guide <button class="close-guide" onclick="toggleGuide()">×</button></h3>
+        <ul>
+              <li><strong>Select Model:</strong> Choose from various sentiment analysis models</li>
+          <li><strong>Enter Text:</strong> Type or paste your text in the input box</li>
+          <li><strong>Analyze:</strong> Click "Classify Text" to get sentiment analysis results</li>
+              <li><strong>View Results:</strong> See sentiment distribution and detailed analysis</li>
+              <li><strong>Compare Models:</strong> Select "Compare All Models" for comprehensive analysis</li>
+        </ul>
+      </div>
+    </div>
+            <select id="modelSelector">
+              <option value="vader">VADER (Rule-Based)</option>
+              <option value="textblob">TextBlob (Rule-Based)</option>
+              <option value="bernoullinb_vader">BernoulliNB-VADER (GridSearchCV)</option>
+              <option value="bernoullinb_vader_baseline">BernoulliNB-VADER (Baseline)</option>
+              <option value="bernoullinb_textblob">BernoulliNB-TextBlob (GridSearchCV)</option>
+              <option value="bernoullinb_textblob_baseline">BernoulliNB-TextBlob (Baseline)</option>
+              <option value="bernoullinb_chatgpt">BernoulliNB-ChatGPT (GridSearchCV)</option>
+              <option value="bernoullinb_chatgpt_baseline">BernoulliNB-ChatGPT (Baseline)</option>
+              <option value="bert_vader">BERT (VADER labels)</option>
+              <option value="bert_textblob">BERT (TextBlob labels)</option>
+              <option value="bert_chatgpt">BERT (ChatGPT labels)</option>
+              <option value="all">Compare All Models</option>
+            </select>
+          <select id="languageSelector" style="margin-bottom: 15px; width: 100%; padding: 8px;">
+            <option value="auto">Auto-detect</option>
+            <option value="ms">Malay</option>
+            <option value="en">English</option>
+          </select>
+
+        <textarea id="textInput" placeholder="Enter election related comment for sentiment analysis... (minimum 10 words)" oninput="updateWordCount()"></textarea>
+        <div id="wordCounter">Words: 0 (minimum 10)</div>
+        <!-- Add this language indicator div -->
+        <div id="languageIndicator" style="margin-bottom: 15px; font-size: 0.9rem; color: #6c757d;">
+        Detected language: <span id="detectedLanguage">-</span>
+        <span id="translationNote" style="display: none;"> (will be translated to English for analysis)</span>
+</div>
+<button id="analyzeButton" onclick="classifySentiment()" disabled>Classify Text</button>
+      </div>
+
+      <!-- Right Column: Results Container -->
+      <div class="results-container">
+        <!-- First Area: Sentiment Results -->
+        <div class="sentiment-results">
+          <h2>Sentiment Analysis Results</h2>
+        <div id="result"></div>
+        </div>
+
+        <!-- Second Area: Detailed Results -->
+        <div class="detailed-results">
+          <div class="chart-section" style="display: none;" id="mainChartSection">
+            <h3>Sentiment Distribution</h3>
+            <div class="chart-container">
+              <canvas id="sentimentChart"></canvas>
+            </div>
+          </div>
+
+          <div id="multiPieCharts" style="display: none;">
+            <h3>Sentiment Distribution by Model</h3>
+            <div class="multi-charts">
+              <div class="chart-wrapper">
+                <div class="chart-title">VADER</div>
+                <canvas id="vaderPie"></canvas>
+              </div>
+              <div class="chart-wrapper">
+                <div class="chart-title">TextBlob</div>
+                <canvas id="textblobPie"></canvas>
+              </div>
+              <div class="chart-wrapper">
+                <div class="chart-title">BernoulliNB (VADER)</div>
+                <canvas id="bernoullinb_vaderPie"></canvas>
+              </div>
+              <div class="chart-wrapper">
+                <div class="chart-title">BernoulliNB Baseline (VADER)</div>
+                <canvas id="bernoullinb_vader_baselinePie"></canvas>
+              </div>
+              <div class="chart-wrapper">
+                <div class="chart-title">BernoulliNB (TextBlob)</div>
+                <canvas id="bernoullinb_textblobPie"></canvas>
+              </div>
+              <div class="chart-wrapper">
+                <div class="chart-title">BernoulliNB Baseline (TextBlob)</div>
+                <canvas id="bernoullinb_textblob_baselinePie"></canvas>
+              </div>
+              <div class="chart-wrapper">
+                <div class="chart-title">BernoulliNB (ChatGPT)</div>
+                <canvas id="bernoullinb_chatgptPie"></canvas>
+              </div>
+              <div class="chart-wrapper">
+                <div class="chart-title">BernoulliNB Baseline (ChatGPT)</div>
+                <canvas id="bernoullinb_chatgpt_baselinePie"></canvas>
+              </div>
+              <div class="chart-wrapper">
+                <div class="chart-title">BERT (VADER)</div>
+                <canvas id="bert_vaderPie"></canvas>
+              </div>
+              <div class="chart-wrapper">
+                <div class="chart-title">BERT (TextBlob)</div>
+                <canvas id="bert_textblobPie"></canvas>
+              </div>
+              <div class="chart-wrapper">
+                <div class="chart-title">BERT (ChatGPT)</div>
+                <canvas id="bert_chatgptPie"></canvas>
+              </div>
+              </div>
+            </div>
+          </div>
+
+        <!-- Third Area: Visualization Results -->
+        <div class="visualization-results">
+          <div id="comparison" style="display: none;">
+            <h3>Model Confidence Comparison</h3>
+            <div class="chart-container">
+              <canvas id="confidenceChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // Register the datalabels plugin globally
+  Chart.register(ChartDataLabels);
+
+  // Set default options for datalabels to ensure consistent behavior
+  Chart.defaults.set('plugins.datalabels', {
+    anchor: 'center',
+    align: 'center'
+  });
+
+  let sentimentChart = null;
+  let confidenceChart = null;
+  let vaderPieChart = null;
+  let textblobPieChart = null;
+  let bernoullinb_vaderPieChart = null;
+  let bernoullinb_textblobPieChart = null;
+  let complementnb_vaderPieChart = null;
+  let complementnb_textblobPieChart = null;
+  let gaussiannb_vaderPieChart = null;
+  let gaussiannb_textblobPieChart = null;
+  let bert_vaderPieChart = null;
+  let bert_textblobPieChart = null;
+  let bert_chatgptPieChart = null;
+  let bernoullinb_vader_baselinePieChart = null;
+  let bernoullinb_textblob_baselinePieChart = null;
+  let bernoullinb_chatgptPieChart = null;
+  let bernoullinb_chatgpt_baselinePieChart = null;
+
+  const sentimentClasses = {
+    0: { label: "Negative", class: "negative" },
+    1: { label: "Neutral", class: "neutral" },
+    2: { label: "Positive", class: "positive" }
+  };
+
+  // Updated pie chart options to match the example
+  const pieChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false  // Hide legend to match example
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            const labels = ['Negative', 'Neutral', 'Positive'];
+            const value = context.parsed;
+            // Always show the exact percentage in tooltip with 1 decimal place
+            // For very small values, show 2 decimal places
+            const decimals = value < 1 ? 2 : 1;
+            return labels[context.dataIndex] + ' probability: ' + value.toFixed(decimals) + '%';
+          }
+        }
+      },
+      datalabels: {
+        color: '#000',
+        font: {
+          size: 16,
+          weight: 'bold'
+        },
+        formatter: (value) => {
+          // Only show label if value is 10% or greater
+          if (value < 10) return '';
+          // Show 0% for very small values, otherwise round normally
+          if (value < 0.5) return '0%';
+          return value.toFixed(0) + '%';
+        },
+        display: function(context) {
+          // Always display the label element (even if empty string)
+          return true;
+        },
+        anchor: 'center',
+        align: 'center'
+      }
+    },
+    layout: {
+      padding: 10
+    },
+    // Add minimum detection radius for small slices
+    elements: {
+      arc: {
+        borderWidth: 2,
+        borderColor: '#000'
+      }
+    }
+  };
+
+  function updateWordCount() {
+    const text = document.getElementById("textInput").value.trim();
+    const wordCount = text.split(/\s+/).filter(word => word.length > 0).length;
+    const wordCounter = document.getElementById("wordCounter");
+    const analyzeButton = document.getElementById("analyzeButton");
+
+    wordCounter.textContent = `Words: ${wordCount} (minimum 10)`;
+
+    if (wordCount < 10) {
+      wordCounter.style.color = "#dc3545";
+      analyzeButton.disabled = true;
+    } else {
+      wordCounter.style.color = "#28a745";
+      analyzeButton.disabled = false;
+    }
+  }
+
+function classifySentiment() {
+    const model = document.getElementById("modelSelector").value;
+    const text = document.getElementById("textInput").value.trim();
+    const language = document.getElementById("languageSelector").value;
+    const resultDiv = document.getElementById("result");
+    const wordCount = text.split(/\s+/).filter(word => word.length > 0).length;
+
+    if (wordCount < 10) {
+      resultDiv.innerHTML = `<div class="result-item">Please enter at least 10 words for accurate sentiment analysis.</div>`;
+      return;
+    }
+
+    if (!text) {
+      resultDiv.innerHTML = `<div class="result-item">Please enter some text to analyze</div>`;
+      return;
+    }
+
+    // Show detecting language message
+    document.getElementById("detectedLanguage").textContent = "detecting...";
+    document.getElementById("translationNote").style.display = "none";
+
+    resultDiv.innerHTML = `<div class="result-item">Detecting language and analyzing sentiment...</div>`;
+    document.getElementById("multiPieCharts").style.display = "none";
+    document.getElementById("comparison").style.display = "none";
+
+    // Clear previous pie charts if any
+    if (vaderPieChart) vaderPieChart.destroy();
+    if (textblobPieChart) textblobPieChart.destroy();
+    if (bernoullinb_vaderPieChart) bernoullinb_vaderPieChart.destroy();
+    if (bernoullinb_textblobPieChart) bernoullinb_textblobPieChart.destroy();
+    if (complementnb_vaderPieChart) complementnb_vaderPieChart.destroy();
+    if (complementnb_textblobPieChart) complementnb_textblobPieChart.destroy();
+    if (gaussiannb_vaderPieChart) gaussiannb_vaderPieChart.destroy();
+    if (gaussiannb_textblobPieChart) gaussiannb_textblobPieChart.destroy();
+    if (bert_vaderPieChart) bert_vaderPieChart.destroy();
+    if (bert_textblobPieChart) bert_textblobPieChart.destroy();
+    if (bert_chatgptPieChart) bert_chatgptPieChart.destroy();
+    if (bernoullinb_vader_baselinePieChart) bernoullinb_vader_baselinePieChart.destroy();
+    if (bernoullinb_textblob_baselinePieChart) bernoullinb_textblob_baselinePieChart.destroy();
+    if (bernoullinb_chatgptPieChart) bernoullinb_chatgptPieChart.destroy();
+    if (bernoullinb_chatgpt_baselinePieChart) bernoullinb_chatgpt_baselinePieChart.destroy();
+
+    fetch(`/classify?model=${model}&text=${encodeURIComponent(text)}&lang=${language}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Update language info
+          const langInfo = data.language_info;
+          const langDisplay = langInfo.original_language === 'en' ? 'English' :
+                            langInfo.original_language === 'ms' ? 'Malay' :
+                            langInfo.original_language;
+          document.getElementById("detectedLanguage").textContent = langDisplay;
+          if (langInfo.was_translated) {
+            document.getElementById("translationNote").style.display = "inline";
+          }
+
+          displayResults(data.results, model);
+        } else {
+          resultDiv.innerHTML = `<div class="result-item">Error: ${data.error}</div>`;
+          document.getElementById("detectedLanguage").textContent = "-";
+          document.getElementById("translationNote").style.display = "none";
+        }
+      })
+      .catch(error => {
+        resultDiv.innerHTML = `<div class="result-item">Server Error: ${error}</div>`;
+        document.getElementById("detectedLanguage").textContent = "-";
+        document.getElementById("translationNote").style.display = "none";
+      });
+  }
+
+  function displayResults(results, model) {
+    const resultDiv = document.getElementById("result");
+    const reportDiv = document.getElementById("report");
+    const mainChartSection = document.getElementById("mainChartSection");
+
+    const resultSection = [];
+    const jsonBlock = [];
+
+    // Show or hide the main chart section based on model
+    if (model === "all") {
+      mainChartSection.style.display = "none";
+    } else {
+      mainChartSection.style.display = "block";
+    }
+
+    if (model === "all") {
+      document.getElementById("multiPieCharts").style.display = "block";
+      document.getElementById("comparison").style.display = "block";
+
+      const labels = [];
+      const confidences = [];
+      const pieData = {};
+
+      // Fetch classification reports for each model
+      const modelMetrics = {};
+      const fetchPromises = [];
+
+      for (const [modelName, info] of Object.entries(results)) {
+        const sentimentClass = sentimentClasses[info.sentiment] || { label: "Unknown", class: "" };
+
+        resultSection.push(
+          `<div class="result-item ${sentimentClass.class}">
+            <strong>Model:</strong> ${modelName.toUpperCase()}<br>
+            <strong>Sentiment:</strong> ${info.sentiment_label}<br>
+            <strong>Confidence:</strong> ${(info.confidence * 100).toFixed(2)}%<br>
+            ${info.json_preview.language_info ?
+              `<strong>Language:</strong> ${info.json_preview.language_info.original_language === 'en' ? 'English' :
+               info.json_preview.language_info.original_language === 'ms' ? 'Malay' :
+               info.json_preview.language_info.original_language}
+               ${info.json_preview.language_info.was_translated ? '(translated to English)' : ''}<br>` : ''}
+          </div>`
+        );
+        // ... rest of the existing code ...
+
+        labels.push(info.model_name);
+        confidences.push(info.confidence);
+
+        // Create probability distribution based on confidence scores
+        // The predicted class gets the confidence score, others share the remaining probability
+        // For example: if model predicts "Positive" with 94.32% confidence,
+        // the pie chart will show: Negative: 3%, Neutral: 3%, Positive: 94%
+        // Note: Labels under 10% won't be displayed on the chart but will show on hover
+        const probabilities = [0, 0, 0]; // [negative, neutral, positive]
+        const confidence = info.confidence * 100;
+        const remaining = 100 - confidence;
+
+        // Assign confidence to the predicted sentiment
+        if (info.sentiment >= 0 && info.sentiment <= 2) {
+          probabilities[info.sentiment] = confidence;
+
+          // Distribute remaining probability to other classes
+          const otherClasses = [0, 1, 2].filter(i => i !== info.sentiment);
+
+          // If confidence is very high (>99%), show 100% for predicted class and 0% for others
+          if (confidence >= 99) {
+            probabilities[info.sentiment] = 100;
+            otherClasses.forEach(i => {
+              probabilities[i] = 0;
+            });
+          } else {
+            otherClasses.forEach(i => {
+              probabilities[i] = remaining / otherClasses.length;
+            });
+
+            // Ensure minimum visibility for very small slices (at least 1% for display)
+            probabilities.forEach((prob, i) => {
+              if (prob > 0 && prob < 1) {
+                probabilities[i] = 1;
+              }
+            });
+
+            // Normalize to ensure sum is 100%
+            const sum = probabilities.reduce((a, b) => a + b, 0);
+            if (sum > 0) {
+              probabilities.forEach((prob, i) => {
+                probabilities[i] = (prob / sum) * 100;
+              });
+            }
+          }
+        } else {
+          // If sentiment is invalid, default to equal distribution
+          probabilities[0] = 33.33;
+          probabilities[1] = 33.33;
+          probabilities[2] = 33.34;
+        }
+
+        // Use probabilities if available from the model, otherwise use our calculated distribution
+        if (info.probabilities && Array.isArray(info.probabilities) && info.probabilities.length === 3) {
+          pieData[modelName] = info.probabilities.map(val => val * 100);
+        } else {
+          pieData[modelName] = probabilities;
+        }
+
+        // Fetch classification report
+        fetchPromises.push(
+          fetch(`/classification_report/${modelName}`)
+            .then(response => response.json())
+            .then(data => {
+              modelMetrics[modelName] = data;
+            })
+            .catch(error => console.error(`Error fetching metrics for ${modelName}:`, error))
+        );
+      }
+
+      // Wait for all classification reports to be fetched
+      Promise.all(fetchPromises).then(() => {
+        renderPieCharts(pieData);
+        renderConfidenceChart(labels, confidences);
+      });
+
+    } else {
+      const info = results[model];
+      const sentimentClass = sentimentClasses[info.sentiment] || { label: "Unknown", class: "" };
+
+      resultSection.push(
+        `<div class="result-item ${sentimentClass.class}">
+          <strong>Model:</strong> ${model.toUpperCase()}<br>
+          <strong>Sentiment:</strong> ${info.sentiment_label}<br>
+          <strong>Confidence:</strong> ${(info.confidence * 100).toFixed(2)}%
+        </div>`
+      );
+
+      // Create probability distribution based on confidence scores
+      // The predicted class gets the confidence score, others share the remaining probability
+      // For example: if model predicts "Positive" with 94.32% confidence,
+      // the pie chart will show: Negative: 3%, Neutral: 3%, Positive: 94%
+      // Note: Labels under 10% won't be displayed on the chart but will show on hover
+      const probabilities = [0, 0, 0]; // [negative, neutral, positive]
+      const confidence = info.confidence * 100;
+      const remaining = 100 - confidence;
+
+      // Assign confidence to the predicted sentiment
+      if (info.sentiment >= 0 && info.sentiment <= 2) {
+        probabilities[info.sentiment] = confidence;
+
+        // Distribute remaining probability to other classes
+        const otherClasses = [0, 1, 2].filter(i => i !== info.sentiment);
+
+        // If confidence is very high (>99%), show 100% for predicted class and 0% for others
+        if (confidence >= 99) {
+          probabilities[info.sentiment] = 100;
+          otherClasses.forEach(i => {
+            probabilities[i] = 0;
+          });
+        } else {
+          otherClasses.forEach(i => {
+            probabilities[i] = remaining / otherClasses.length;
+          });
+
+          // Ensure minimum visibility for very small slices (at least 1% for display)
+          probabilities.forEach((prob, i) => {
+            if (prob > 0 && prob < 1) {
+              probabilities[i] = 1;
+            }
+          });
+
+          // Normalize to ensure sum is 100%
+          const sum = probabilities.reduce((a, b) => a + b, 0);
+          if (sum > 0) {
+            probabilities.forEach((prob, i) => {
+              probabilities[i] = (prob / sum) * 100;
+            });
+          }
+        }
+      } else {
+        // If sentiment is invalid, default to equal distribution
+        probabilities[0] = 33.33;
+        probabilities[1] = 33.33;
+        probabilities[2] = 33.34;
+      }
+
+      // Use probabilities if available from the model, otherwise use our calculated distribution
+      const distribution = (info.probabilities && Array.isArray(info.probabilities) && info.probabilities.length === 3) ?
+        info.probabilities.map(val => val * 100) :
+        probabilities;
+
+      updateChart(distribution);
+    }
+
+    resultDiv.innerHTML = resultSection.join('');
+  }
+
+  function updateChart(distribution) {
+    const ctx = document.getElementById('sentimentChart')?.getContext('2d');
+    if (!ctx) {
+      console.error("Canvas with id 'sentimentChart' not found.");
+      return;
+    }
+
+    // Ensure distribution is valid
+    if (!Array.isArray(distribution) || distribution.length !== 3) {
+      console.error('Invalid distribution:', distribution);
+      distribution = [33.33, 33.33, 33.34]; // Default distribution
+    }
+
+    if (sentimentChart) {
+      sentimentChart.destroy();
+      sentimentChart = null;
+    }
+
+    // Calculate total to ensure percentages sum to 100
+    const total = distribution.reduce((a, b) => a + b, 0);
+    const normalizedData = total === 0 ?
+      [33.33, 33.33, 33.34] : // Default if total is 0
+      distribution.map(val => (val / total) * 100);
+
+    sentimentChart = new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: ['Negative', 'Neutral', 'Positive'],
+        datasets: [{
+          data: normalizedData.map(val => Number(val.toFixed(2))),
+          backgroundColor: ['#dc3545', '#ffc107', '#28a745'], // [negative (red), neutral (yellow), positive (green)]
+          borderWidth: 2,
+          borderColor: '#000',
+          // Ensure minimum arc size for visibility
+          borderAlign: 'inner'
+        }]
+      },
+      options: pieChartOptions
+    });
+  }
+
+  function renderPieCharts(distributions) {
+    const colors = ['#dc3545', '#ffc107', '#28a745']; // [negative (red), neutral (yellow), positive (green)]
+    const labels = ['Negative', 'Neutral', 'Positive'];
+
+    function drawChart(id, data, chartRefName) {
+      const ctx = document.getElementById(id)?.getContext('2d');
+      if (!ctx) {
+        console.error(`Canvas with id '${id}' not found`);
+        return;
+      }
+
+      // Ensure data is valid
+      if (!Array.isArray(data) || data.length !== 3) {
+        console.error(`Invalid data for ${id}:`, data);
+        data = [33.33, 33.33, 33.34]; // Default distribution
+      }
+
+      // Destroy existing chart if it exists
+      if (window[chartRefName]) {
+        window[chartRefName].destroy();
+        window[chartRefName] = null;
+      }
+
+      // Calculate total to ensure percentages sum to 100
+      const total = data.reduce((a, b) => a + b, 0);
+      const normalizedData = total === 0 ?
+        [33.33, 33.33, 33.34] : // Default if total is 0
+        data.map(val => (val / total) * 100);
+
+      // Create new chart
+      window[chartRefName] = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: normalizedData.map(val => Number(val.toFixed(2))),
+            backgroundColor: colors,
+            borderWidth: 2,
+            borderColor: '#000'
+          }]
+        },
+        options: pieChartOptions
+      });
+    }
+
+    const chartRefs = [
+      'vaderPieChart', 'textblobPieChart',
+      'bernoullinb_vaderPieChart', 'bernoullinb_vader_baselinePieChart',
+      'bernoullinb_textblobPieChart', 'bernoullinb_textblob_baselinePieChart',
+      'bernoullinb_chatgptPieChart', 'bernoullinb_chatgpt_baselinePieChart',
+      'complementnb_vaderPieChart', 'complementnb_textblobPieChart',
+      'gaussiannb_vaderPieChart', 'gaussiannb_textblobPieChart',
+      'bert_vaderPieChart', 'bert_textblobPieChart', 'bert_chatgptPieChart'
+    ];
+
+    chartRefs.forEach(ref => {
+      if (window[ref]) {
+        window[ref].destroy();
+        window[ref] = null;
+      }
+    });
+
+    // Draw new charts
+    const chartMappings = [
+      { id: 'vaderPie', key: 'vader', ref: 'vaderPieChart' },
+      { id: 'textblobPie', key: 'textblob', ref: 'textblobPieChart' },
+      { id: 'bernoullinb_vaderPie', key: 'bernoullinb_vader', ref: 'bernoullinb_vaderPieChart' },
+      { id: 'bernoullinb_vader_baselinePie', key: 'bernoullinb_vader_baseline', ref: 'bernoullinb_vader_baselinePieChart' },
+      { id: 'bernoullinb_textblobPie', key: 'bernoullinb_textblob', ref: 'bernoullinb_textblobPieChart' },
+      { id: 'bernoullinb_textblob_baselinePie', key: 'bernoullinb_textblob_baseline', ref: 'bernoullinb_textblob_baselinePieChart' },
+      { id: 'bernoullinb_chatgptPie', key: 'bernoullinb_chatgpt', ref: 'bernoullinb_chatgptPieChart' },
+      { id: 'bernoullinb_chatgpt_baselinePie', key: 'bernoullinb_chatgpt_baseline', ref: 'bernoullinb_chatgpt_baselinePieChart' },
+      { id: 'complementnb_vaderPie', key: 'complementnb_vader', ref: 'complementnb_vaderPieChart' },
+      { id: 'complementnb_textblobPie', key: 'complementnb_textblob', ref: 'complementnb_textblobPieChart' },
+      { id: 'gaussiannb_vaderPie', key: 'gaussiannb_vader', ref: 'gaussiannb_vaderPieChart' },
+      { id: 'gaussiannb_textblobPie', key: 'gaussiannb_textblob', ref: 'gaussiannb_textblobPieChart' },
+      { id: 'bert_vaderPie', key: 'bert_vader', ref: 'bert_vaderPieChart' },
+      { id: 'bert_textblobPie', key: 'bert_textblob', ref: 'bert_textblobPieChart' },
+      { id: 'bert_chatgptPie', key: 'bert_chatgpt', ref: 'bert_chatgptPieChart' }
+    ];
+
+    chartMappings.forEach(({ id, key, ref }) => {
+      if (distributions[key]) {
+        drawChart(id, distributions[key], ref);
+      }
+    });
+  }
+
+  function renderConfidenceChart(labels, values) {
+    const ctx = document.getElementById('confidenceChart').getContext('2d');
+    if (confidenceChart) confidenceChart.destroy();
+
+    confidenceChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Confidence Score',
+          data: values,
+        backgroundColor: [
+          '#007bff', '#17a2b8', '#6c757d',
+          '#ffc107', '#28a745', '#6610f2',
+          '#dc3545', '#fd7e14', '#6f42c1',
+          '#20c997', '#e83e8c'
+        ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return `Confidence: ${(context.raw * 100).toFixed(1)}%`;
+              }
+            }
+          },
+          datalabels: {
+            display: false  // Disable datalabels for bar chart
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 1
+          }
+        }
+      }
+    });
+  }
+
+
+  function toggleGuide() {
+    const guideSection = document.getElementById('guideSection');
+  const isVisible = guideSection.style.display !== 'none';
+
+  if (isVisible) {
+    guideSection.style.display = 'none';
+  } else {
+        guideSection.style.display = 'block';
+
+    // On mobile, ensure the guide is properly positioned
+    if (window.innerWidth <= 768) {
+      guideSection.style.position = 'fixed';
+      guideSection.style.top = '50%';
+      guideSection.style.left = '50%';
+      guideSection.style.transform = 'translate(-50%, -50%)';
+      guideSection.style.zIndex = '10001';
+    }
+  }
+}
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Remove the initial chart call
+    makeChartsResponsive();
+
+    // Add click handlers to sidebar menu items
+    const menuItems = document.querySelectorAll('.sidebar-menu a');
+    menuItems.forEach(item => {
+      item.addEventListener('click', handleMenuClick);
+    });
+
+    // Initialize touch support and prevent zoom
+    addTouchSupport();
+    preventZoom();
+  });
+  // Sidebar toggle functions
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sidebarBackdrop');
+
+  if (window.innerWidth <= 1024) {
+    // Mobile behavior - toggle open/close
+    sidebar.classList.toggle('open');
+    if (backdrop) {
+      backdrop.classList.toggle('show');
+    }
+    } else {
+    // Desktop behavior - toggle collapsed
+    sidebar.classList.toggle('collapsed');
+  }
+}
+
+// Close sidebar when clicking on backdrop
+function closeSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sidebarBackdrop');
+
+  sidebar.classList.remove('open');
+  if (backdrop) {
+    backdrop.classList.remove('show');
+  }
+}
+
+// Close sidebar when clicking on a menu item (mobile only)
+function handleMenuClick(event) {
+  if (window.innerWidth <= 1024) {
+    setTimeout(() => {
+      closeSidebar();
+    }, 300); // Small delay to show the click feedback
+  }
+}
+
+// Auto-expand sidebar on window resize for large screens
+window.addEventListener('resize', () => {
+  if (window.innerWidth > 1024) {
+    // Desktop - remove mobile classes
+    document.getElementById('sidebar').classList.remove('open');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    if (backdrop) {
+      backdrop.classList.remove('show');
+    }
+  } else {
+    // Mobile - remove desktop collapsed state
+    document.getElementById('sidebar').classList.remove('collapsed');
+  }
+});
+// Touch event handling for better mobile interaction
+function addTouchSupport() {
+  // Add touch feedback to buttons
+  const buttons = document.querySelectorAll('button, .hint-icon');
+  buttons.forEach(button => {
+    button.addEventListener('touchstart', function() {
+      this.style.opacity = '0.7';
+    });
+
+    button.addEventListener('touchend', function() {
+      this.style.opacity = '';
+    });
+
+    button.addEventListener('touchcancel', function() {
+      this.style.opacity = '';
+    });
+  });
+}
+
+// Prevent zoom on mobile
+function preventZoom() {
+  // Prevent double-tap zoom
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', function(event) {
+    const now = Date.now();
+    if (now - lastTouchEnd <= 300) {
+      event.preventDefault();
+    }
+    lastTouchEnd = now;
+  }, false);
+}
+
+// Initialize mobile optimizations
+  document.addEventListener('DOMContentLoaded', function() {
+  // Create backdrop element for mobile sidebar
+  const backdrop = document.createElement('div');
+  backdrop.id = 'sidebarBackdrop';
+  backdrop.className = 'sidebar-backdrop';
+  backdrop.addEventListener('click', closeSidebar);
+  document.body.appendChild(backdrop);
+
+  // Add click handlers to sidebar menu items
+  const menuItems = document.querySelectorAll('.sidebar-menu a');
+  menuItems.forEach(item => {
+    item.addEventListener('click', handleMenuClick);
+  });
+
+  // Initialize touch support and prevent zoom
+  addTouchSupport();
+  preventZoom();
+});
+
+// Enhanced chart responsiveness
+function makeChartsResponsive() {
+  // Debounce resize events
+  let resizeTimer;
+  window.addEventListener('resize', function() {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function() {
+      // Resize all charts
+      if (sentimentChart) {
+        sentimentChart.resize();
+      }
+      if (confidenceChart) {
+        confidenceChart.resize();
+      }
+
+      // Resize pie charts
+      const pieCharts = [
+        vaderPieChart, textblobPieChart, bernoullinb_vaderPieChart,
+        bernoullinb_textblobPieChart, complementnb_vaderPieChart,
+        complementnb_textblobPieChart, gaussiannb_vaderPieChart,
+        gaussiannb_textblobPieChart, bert_vaderPieChart,
+        bert_textblobPieChart, bert_chatgptPieChart
+      ];
+
+      pieCharts.forEach(chart => {
+        if (chart) {
+          chart.resize();
+        }
+      });
+    }, 250);
+  });
+}
+
+// Call this function after DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+  makeChartsResponsive();
+});
+
+// Handle orientation change on mobile devices
+window.addEventListener('orientationchange', function() {
+  setTimeout(function() {
+    // Trigger resize event to recalculate chart dimensions
+    window.dispatchEvent(new Event('resize'));
+  }, 100);
+});
+
+// Add tooltips to metrics (if any)
+function addMetricTooltips() {
+  document.querySelectorAll('.metric').forEach(metric => {
+    if (metric.innerText.includes('Accuracy')) metric.setAttribute('data-tooltip', 'Overall correct predictions');
+    if (metric.innerText.includes('Precision')) metric.setAttribute('data-tooltip', 'Correct positive predictions');
+    if (metric.innerText.includes('Recall')) metric.setAttribute('data-tooltip', 'Coverage of actual positives');
+    if (metric.innerText.includes('F1-Score')) metric.setAttribute('data-tooltip', 'Harmonic mean of precision and recall');
+  });
+}
+document.addEventListener('DOMContentLoaded', addMetricTooltips);
+</script>
+<svg style="display: none;">
+  <defs>
+    <symbol id="bar-chart-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 3v18h18"/>
+      <path d="M18 17V9"/>
+      <path d="M13 17V5"/>
+      <path d="M8 17v-3"/>
+    </symbol>
+    <symbol id="layout-dashboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="7" height="9"/>
+      <rect x="14" y="3" width="7" height="5"/>
+      <rect x="14" y="12" width="7" height="9"/>
+      <rect x="3" y="16" width="7" height="5"/>
+    </symbol>
+    <symbol id="layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="12,2 2,7 12,12 22,7 12,2"/>
+      <polyline points="2,17 12,22 22,17"/>
+      <polyline points="2,12 12,17 22,12"/>
+    </symbol>
+    <symbol id="history" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+      <path d="M3 3v5h5"/>
+      <path d="M12 7v5l4 2"/>
+    </symbol>
+    <symbol id="trending-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="22,7 13.5,15.5 8.5,10.5 2,17"/>
+      <polyline points="16,7 22,7 22,13"/>
+    </symbol>
+    <symbol id="chevron-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="15,18 9,12 15,6"/>
+    </symbol>
+    <symbol id="menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="3" y1="6" x2="21" y2="6"/>
+      <line x1="3" y1="12" x2="21" y2="12"/>
+      <line x1="3" y1="18" x2="21" y2="18"/>
+    </symbol>
+  </defs>
+</svg>
+<svg style="display: none;">
+  <defs>
+    <!-- Add this close icon for mobile guide -->
+    <symbol id="x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"/>
+      <line x1="6" y1="6" x2="18" y2="18"/>
+    </symbol>
+
+    <!-- Add this for mobile orientation -->
+    <symbol id="smartphone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+      <line x1="12" y1="18" x2="12.01" y2="18"/>
+    </symbol>
+  </defs>
+</svg>
+
+</body>
+</html>
