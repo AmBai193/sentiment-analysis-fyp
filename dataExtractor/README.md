@@ -21,26 +21,47 @@ A comprehensive full-stack platform designed to analyze, compare, and visualize 
 
 ### 1. Clone the Repository
 ```bash
-git clone [https://github.com/AmBai193/sentiment-analysis-fyp.git](https://github.com/AmBai193/sentiment-analysis-fyp.git)
+git clone https://github.com/AmBai193/sentiment-analysis-fyp.git
 cd sentiment-analysis-fyp
+```
 
 ### 2. Set Up Virtual Environment
 ```bash
 python -m venv .venv
 # Activate on Windows:
 .venv\Scripts\activate
+```
 
 ### 3. Install Requirements
 ```bash
 pip install -r requirements.txt
+```
 
 ### 4. Configuration (Required)
-## Firebase: Generate a credentials.json from your Firebase Console (Project Settings > Service Accounts) and place it in the root directory.
-## NLTK Data: Download the necessary linguistic corpora for TextBlob:
+- **Firebase:** Generate a `credentials.json` from your Firebase Console (Project Settings > Service Accounts) and place it in the root directory.
+- **NLTK Data:** Download the necessary linguistic corpora for TextBlob:
 ```bash
 python -m textblob.download_corpora
+```
 
-### Run the application locally:
+## 🏃 Usage
+
+Run the application locally:
 ```bash
 python app.py
+```
+
+Access the interface at `http://localhost:8080`.
+
+> **Note:** On the first run using a BERT model, the application will download approximately 1.5GB of model weights from Hugging Face. This occurs only once and requires an active internet connection.
+
+## 📂 Project Structure
+
+| File/Folder | Description |
+|---|---|
+| `app.py` | Main Flask server and sentiment analysis routing logic |
+| `upload_models.py` | Utility script for managing Hugging Face repository uploads |
+| `templates/` | HTML front-end components |
+| `static/` | Custom CSS and JavaScript for interactive visualizations |
+| `requirements.txt` | Comprehensive list of Python dependencies |
 
