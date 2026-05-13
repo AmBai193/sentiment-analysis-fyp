@@ -16,6 +16,8 @@ credentials.json
 # --- Large ML Models & Data ---
 # These folders/files are too big for a standard GitHub push
 bert_finetuned_*/
+upload_models.py
+MY_TOKEN_FILE.txt
 # *.pkl
 # *.joblib
 *.csv

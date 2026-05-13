@@ -143,32 +143,29 @@ models = {
     },
 
     # BERT: TextBlob-labeled
+    # For TextBlob-labeled BERT
     'bert_textblob': {
         'name': 'BERT (TextBlob labels)',
         'type': 'bert',
-        'model': BertForSequenceClassification.from_pretrained('./bert_finetuned_textblob_model') if os.path.exists(
-            './bert_finetuned_textblob_model') else None,
-        'tokenizer': BertTokenizer.from_pretrained('./bert_finetuned_textblob_model') if os.path.exists(
-            './bert_finetuned_textblob_model') else None
+        'model': BertForSequenceClassification.from_pretrained('Baizawir55/bert-sentiment-classifier', subfolder="bert_textblob"),
+        'tokenizer': BertTokenizer.from_pretrained('Baizawir55/bert-sentiment-classifier', subfolder="bert_textblob")
     },
+
     # BERT: VADER-labeled
     'bert_vader': {
         'name': 'BERT (VADER labels)',
         'type': 'bert',
-        'model': BertForSequenceClassification.from_pretrained('./bert_finetuned_vader_model') if os.path.exists(
-            './bert_finetuned_vader_model') else None,
-        'tokenizer': BertTokenizer.from_pretrained('./bert_finetuned_vader_model') if os.path.exists(
-            './bert_finetuned_vader_model') else None
+        'model': BertForSequenceClassification.from_pretrained('Baizawir55/bert-sentiment-classifier', subfolder="bert_vader"),
+        'tokenizer': BertTokenizer.from_pretrained('Baizawir55/bert-sentiment-classifier', subfolder="bert_vader")
     },
+
     # BERT: ChatGPT-labeled
     'bert_chatgpt': {
         'name': 'BERT (ChatGPT labels)',
         'type': 'bert',
-        'model': BertForSequenceClassification.from_pretrained('./bert_finetuned_chatgpt_model') if os.path.exists(
-            './bert_finetuned_chatgpt_model') else None,
-        'tokenizer': BertTokenizer.from_pretrained('./bert_finetuned_chatgpt_model') if os.path.exists(
-            './bert_finetuned_chatgpt_model') else None
-    }
+        'model': BertForSequenceClassification.from_pretrained('Baizawir55/bert-sentiment-classifier', subfolder="bert_chatgpt"),
+        'tokenizer': BertTokenizer.from_pretrained('Baizawir55/bert-sentiment-classifier', subfolder="bert_chatgpt")
+    },
 
 }
 
