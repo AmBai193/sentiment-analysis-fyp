@@ -2,7 +2,7 @@
 
 A comprehensive full-stack platform designed to analyze, compare, and visualize text sentiment using a multi-model approach. This project integrates rule-based logic, traditional machine learning, and deep learning architectures to provide a robust evaluation of textual data.
 
-##Features
+## Features
 - **Multi-Model Comparison:** Compare results across Rule-based (VADER, TextBlob), Machine Learning (Bernoulli Naive Bayes), and Deep Learning (BERT) models.
 - **Dynamic Model Loading:** High-performance BERT models are hosted on **Hugging Face Hub** and downloaded on-demand to maintain a lightweight repository.
 - **Batch Processing:** Integrated CSV upload functionality for large-scale dataset analysis.
